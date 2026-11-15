@@ -1,0 +1,15 @@
+{
+  "name": "x-bookmark-recall",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "check": "find extension site -name \"*.js\" -exec node --check \"{}\" + && npm test",
+    "dev": "wrangler dev --config wrangler.jsonc",
+    "deploy:check": "wrangler deploy --dry-run --config wrangler.jsonc"
+  },
+  "devDependencies": {
+    "wrangler": "4.162.0"
+  }
+}

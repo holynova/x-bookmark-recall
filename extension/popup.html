@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>X 书签回看</title>
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<header class="heading">
+  <img src="icons/48.png" width="34" height="34" alt="">
+  <div><h1>X 书签回看</h1><p>在推荐时间线重看旧书签</p></div>
+</header>
+<main>
+  <label id="tab-choice" class="tab-choice" hidden>使用 X 标签页<select id="x-tab"></select></label>
+  <p id="counts" class="counts">正在读取本机书签…</p>
+  <section class="import-box" aria-labelledby="import-title">
+    <h2 id="import-title">从 X 书签导入</h2>
+    <p id="import-info">打开 X 书签页后，可以导入页面已加载的帖子。</p>
+    <button type="button" id="import">打开 X 书签页</button>
+    <button type="button" id="collect" class="secondary" hidden>滚动时继续收集</button>
+    <p id="collection" class="collection" hidden></p>
+    <p id="feedback" role="status" hidden></p>
+  </section>
+  <section class="positions" aria-labelledby="placement-title">
+    <h2 id="placement-title">展示位置</h2>
+    <label>首页顶部<input type="checkbox" id="top" class="switch" role="switch"></label>
+    <label>时间线中<input type="checkbox" id="inline" class="switch" role="switch"></label>
+    <label>插入到<select id="interval">
+      <option value="2">第 2 条之后</option>
+      <option value="3">第 3 条之后</option>
+      <option value="5">第 5 条之后</option>
+    </select></label>
+  </section>
+</main>
+<footer>
+  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="10" width="12" height="10" rx="2"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/></svg>
+  书签保存在本机 · 已读只影响回看
+</footer>
+<script src="popup.js" type="module"></script>
+</body>
+</html>
