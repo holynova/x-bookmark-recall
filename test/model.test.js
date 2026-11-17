@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { changeCard, defaults, emptyLibrary, mergePosts, normalizePost, selectCards, settingsFrom, summarize } from '../extension/model.js';
+import { changeCard, defaults, emptyLibrary, mergePosts, normalizePost, selectCards, settingsFrom, showsInChannel, summarize } from '../extension/model.js';
 
 const now = 1_800_000_000_000;
 const day = 86_400_000;
@@ -104,5 +104,23 @@ test('chooses the least recently surfaced posts once the fresh pool is exhausted
 
 test('ignores invalid saved settings', () => {
   assert.deepEqual(settingsFrom({ top: false, inline: null, interval: 8 }),
-    { top: false, inline: true, interval: 3 });
+    { top: false, inline: true, interval: 3, channel: 'both' });
+});
+
+test('keeps every paragraph of a long imported post', () => {
+  const text = '这是可见正文的一段。\n\n'.repeat(650) + '最后一段';
+  const library = makeLibrary(1);
+  mergePosts(library, [post(1, { text })], now + 1);
+  assert.equal(library.posts[0].text, text);
+});
+
+test('existing settings default to both home channels; options can select either one', () => {
+  const previous = settingsFrom({ top: false, inline: true, interval: 5 });
+  assert.equal(previous.interval, 5);
+  assert.equal(showsInChannel(previous, 'recommended'), true);
+  assert.equal(showsInChannel(previous, 'following'), true);
+  assert.equal(showsInChannel(previous, 'list'), false);
+  assert.equal(showsInChannel(settingsFrom({ channel: 'following' }), 'recommended'), false);
+  assert.equal(showsInChannel(settingsFrom({ channel: 'following' }), 'following'), true);
+  assert.equal(showsInChannel(settingsFrom({ channel: 'recommended' }), 'following'), false);
 });

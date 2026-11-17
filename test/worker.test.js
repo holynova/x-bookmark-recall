@@ -56,12 +56,12 @@ test('worker gates imports, serializes concurrent updates, and isolates accounts
   assert.equal(other.total, 0);
 
   const home = site('/home');
-  const initial = await send(home, 'cards', { owner });
-  const repeated = await send(home, 'cards', { owner });
+  const initial = await send(home, 'cards', { owner, channel: 'recommended' });
+  const repeated = await send(home, 'cards', { owner, channel: 'following' });
   assert.deepEqual(initial.cards, repeated.cards);
   assert.notEqual(initial.cards.top.id, initial.cards.inline.id);
 
-  const args = { owner, slot: 'top', id: initial.cards.top.id };
+  const args = { owner, slot: 'top', id: initial.cards.top.id, channel: 'recommended' };
   const read = await send(home, 'read', args);
   assert.notEqual(read.cards.top.id, args.id);
   assert.equal((await send(popup, 'summary', { owner })).unread, 3);
@@ -69,8 +69,12 @@ test('worker gates imports, serializes concurrent updates, and isolates accounts
   assert.equal(undo.cards.top.id, args.id);
   assert.equal((await send(popup, 'summary', { owner })).unread, 4);
 
-  await send(popup, 'settings', { patch: { inline: false } });
-  const topOnly = await send(home, 'cards', { owner });
+  await send(popup, 'settings', { patch: { inline: false, channel: 'following' } });
+  const hidden = await send(home, 'cards', { owner, channel: 'recommended' });
+  assert.deepEqual(hidden.cards, {});
+  const staleAction = await send(home, 'read', args);
+  assert.equal(staleAction.action, false);
+  const topOnly = await send(home, 'cards', { owner, channel: 'following' });
   assert.ok(topOnly.cards.top);
   assert.equal(topOnly.cards.inline, undefined);
   closeTab(1);

@@ -1,7 +1,12 @@
 const one = id => document.getElementById(id);
-const controls = { top: one('top'), inline: one('inline'), interval: one('interval') };
+const controls = { top: one('top'), inline: one('inline'), interval: one('interval'), channel: one('channel') };
 const primary = one('import');
 const collect = one('collect');
+const autoForm = one('auto-form');
+const autoStart = one('auto-start');
+const autoStatus = one('auto-status');
+const autoLimit = one('auto-limit');
+const autoYears = one('auto-years');
 const feedback = one('feedback');
 const tabChoice = one('tab-choice');
 const tabSelect = one('x-tab');
@@ -11,6 +16,7 @@ let locked = false;
 let generation = 0;
 let selectedTabId;
 let renderedTabs = '';
+let shownJob;
 
 function worker(type, options) {
   return chrome.runtime.sendMessage({ target: 'recall-worker', type, ...options })
@@ -22,9 +28,9 @@ function unwrap(response) {
   return response;
 }
 
-function sendTab(type, tab = currentTab) {
+function sendTab(type, tab = currentTab, data = {}) {
   if (!tab?.id) return Promise.reject(new Error('请先打开 X。'));
-  return chrome.tabs.sendMessage(tab.id, { target: 'recall-tab', type }, { frameId: 0 })
+  return chrome.tabs.sendMessage(tab.id, { target: 'recall-tab', type, ...data }, { frameId: 0 })
     .catch(() => { throw new Error('请刷新 X 页面，然后再打开扩展。'); })
     .then(unwrap);
 }
@@ -39,6 +45,7 @@ function updateSettings(settings) {
   controls.top.checked = settings.top;
   controls.inline.checked = settings.inline;
   controls.interval.value = settings.interval;
+  controls.channel.value = settings.channel;
   controls.interval.disabled = !settings.inline;
 }
 
@@ -88,10 +95,31 @@ function renderContext(summary) {
   const onX = !!activePage;
   primary.textContent = atBookmarks ? '导入已加载书签' : '打开 X 书签页';
   one('import-info').textContent = atBookmarks
-    ? '导入页面当前载入的书签。想多导一些，可以滚动时继续收集。'
+    ? '自动从页面顶部开始。留空不限，年限按发帖时间筛选。'
     : onX ? '打开 X 书签页后，可以导入页面已加载的帖子。'
       : tabChoice.hidden ? '请先打开已登录的 X，然后从书签页导入。' : '请选择要使用的 X 标签页。';
   collect.hidden = !atBookmarks;
+  autoForm.hidden = !atBookmarks;
+  primary.classList.toggle('secondary', atBookmarks);
+  const auto = activePage?.auto;
+  if (auto && !shownJob) {
+    autoLimit.value = auto.options.limit ?? '';
+    autoYears.value = auto.options.years ?? '';
+  }
+  shownJob = auto;
+  const running = auto?.status === 'running';
+  const stopping = auto?.status === 'stopping';
+  primary.disabled = locked || running || stopping;
+  collect.disabled = primary.disabled;
+  autoLimit.disabled = primary.disabled;
+  autoYears.disabled = primary.disabled;
+  autoStart.disabled = locked || stopping;
+  autoStart.textContent = running ? '停止自动导入' : stopping ? '正在停止…' : '自动滚动导入';
+  autoStatus.hidden = !auto;
+  if (auto) {
+    autoStatus.textContent = auto.text;
+    autoStatus.dataset.error = String(['error', 'stalled'].includes(auto.status));
+  }
   collect.textContent = activePage?.collection && !activePage.collection.error
     ? '停止连续导入' : '滚动时继续收集';
   const collection = one('collection');
@@ -124,6 +152,7 @@ function setBusy(busy) {
   locked = busy;
   primary.disabled = busy;
   collect.disabled = busy;
+  autoStart.disabled = busy;
   if (busy) ++generation;
 }
 
@@ -165,9 +194,28 @@ collect.addEventListener('click', async () => {
   }
 });
 
+autoForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (locked || !autoForm.reportValidity()) return;
+  const running = activePage?.auto?.status === 'running';
+  setBusy(true);
+  message();
+  try {
+    await sendTab(running ? 'stop-auto' : 'start-auto', currentTab, {
+      options: { limit: autoLimit.value, years: autoYears.value }
+    });
+  } catch (error) {
+    message(error.message, true);
+  } finally {
+    setBusy(false);
+    refresh();
+  }
+});
+
 for (const [key, control] of Object.entries(controls)) {
   control.addEventListener('change', async () => {
-    const value = key === 'interval' ? Number(control.value) : control.checked;
+    const value = control.type === 'checkbox' ? control.checked
+      : key === 'interval' ? Number(control.value) : control.value;
     const request = ++generation;
     try {
       const response = await worker('settings', { patch: { [key]: value } });

@@ -3,6 +3,7 @@ const RecallX = (() => {
   const tweetSelector = 'article[data-testid="tweet"]';
   const cellSelector = '[data-testid="cellInnerDiv"]';
   const recommendedLabel = /^(for you|为你推荐|为你推荐的|推荐|為你推薦|為您推薦|推薦|おすすめ)$/iu;
+  const followingLabel = /^(following|正在关注|已关注|关注|正在關注|關注中|已關注|關注|フォロー中)$/iu;
 
   function path() {
     return location.pathname.replace(/\/$/, '');
@@ -70,10 +71,28 @@ const RecallX = (() => {
     return [...(primary()?.querySelectorAll(tweetSelector) || [])].map(parsePost).filter(Boolean);
   }
 
-  function recommended() {
-    if (route() !== 'home') return false;
+  function homeChannel() {
+    if (route() !== 'home') return null;
     const selected = primary()?.querySelector('[role="tab"][aria-selected="true"]');
-    return !!selected && recommendedLabel.test(selected.textContent.trim());
+    const label = selected?.textContent.trim() || '';
+    if (recommendedLabel.test(label)) return 'recommended';
+    if (followingLabel.test(label)) return 'following';
+    return null;
+  }
+
+  function bookmarkPage() {
+    const column = primary();
+    const scroller = document.scrollingElement;
+    return {
+      posts: visibleBookmarks(),
+      y: scroller?.scrollTop || 0,
+      height: scroller?.scrollHeight || 0,
+      viewport: scroller?.clientHeight || window.innerHeight,
+      loading: !!column?.querySelector('[role="progressbar"]'),
+      empty: !!column?.querySelector('[data-testid="emptyState"]'),
+      retry: [...(column?.querySelectorAll('button') || [])].some(button =>
+        /^(retry|try again|重试|再试一次|重試|再試一次|再試行)$/iu.test(button.textContent.trim()))
+    };
   }
 
   function feedKey(article) {
@@ -86,7 +105,7 @@ const RecallX = (() => {
   }
 
   function feed() {
-    if (!recommended()) return null;
+    if (!homeChannel()) return null;
     const column = primary();
     const first = column?.querySelector(tweetSelector);
     const list = first?.closest(cellSelector)?.parentElement;
@@ -97,6 +116,7 @@ const RecallX = (() => {
       const transform = getComputedStyle(cell).transform;
       return {
         cell,
+        article,
         id: article ? feedKey(article) : null,
         offset: cell.offsetTop + (transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m42)
       };
@@ -111,5 +131,5 @@ const RecallX = (() => {
     return !!rgb && rgb.length >= 3 && (rgb[0] + rgb[1] + rgb[2]) / 3 < 120 && rgb[3] !== 0;
   }
 
-  return { account, dark, feed, parsePost, primary, recommended, route, visibleBookmarks };
+  return { account, bookmarkPage, dark, feed, homeChannel, parsePost, primary, route, visibleBookmarks };
 })();

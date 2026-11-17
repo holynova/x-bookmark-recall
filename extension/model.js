@@ -1,4 +1,4 @@
-export const defaults = { top: true, inline: true, interval: 3 };
+export const defaults = { top: true, inline: true, interval: 3, channel: 'both' };
 export const emptyLibrary = () => ({ posts: [] });
 export const slots = ['top', 'inline'];
 const DAY = 86_400_000;
@@ -12,8 +12,14 @@ export function settingsFrom(value) {
   return {
     top: typeof value?.top === 'boolean' ? value.top : defaults.top,
     inline: typeof value?.inline === 'boolean' ? value.inline : defaults.inline,
-    interval: [2, 3, 5].includes(value?.interval) ? value.interval : defaults.interval
+    interval: [2, 3, 5].includes(value?.interval) ? value.interval : defaults.interval,
+    channel: ['both', 'recommended', 'following'].includes(value?.channel) ? value.channel : defaults.channel
   };
+}
+
+export function showsInChannel(settings, channel) {
+  return ['recommended', 'following'].includes(channel) &&
+    (settings.channel === 'both' || settings.channel === channel);
 }
 
 function imageUrl(value, directory) {
@@ -31,7 +37,7 @@ export function normalizePost(value) {
   const id = value?.id;
   const handle = username(value?.handle);
   if (typeof id !== 'string' || !/^\d{1,22}$/.test(id) || !handle) return null;
-  const text = typeof value.text === 'string' ? value.text.trim().slice(0, 6000) : '';
+  const text = typeof value.text === 'string' ? value.text.trim() : '';
   const photo = imageUrl(value.photo, '/media/');
   const hasMedia = value.hasMedia === true;
   return {
@@ -92,8 +98,9 @@ function candidates(posts, excludedIds, now) {
   return pool.sort((a, b) => a.shownAt - b.shownAt).slice(0, Math.min(3, pool.length));
 }
 
-export function selectCards(library, selection, settings, now, random = Math.random, except = null) {
-  const chosen = new Set(except ? [except] : []);
+export function selectCards(library, selection, settings, now, random = Math.random, except = null, reserved = []) {
+  const chosen = new Set(reserved);
+  if (except) chosen.add(except);
   const posts = new Map(library.posts.map(post => [post.id, post]));
   const cards = {};
   for (const slot of slots) {
@@ -120,7 +127,7 @@ export function selectCards(library, selection, settings, now, random = Math.ran
   return { cards, changed };
 }
 
-export function changeCard(library, selection, slot, action, id, now, undoAt) {
+export function changeCard(library, selection, slot, action, id, now, undoAt, reserved = []) {
   if (!slots.includes(slot)) return false;
   const post = library.posts.find(item => item.id === id);
   if (!post) return false;
@@ -133,7 +140,8 @@ export function changeCard(library, selection, slot, action, id, now, undoAt) {
   if (selection[slot] !== id || post.readAt) return false;
   if (action === 'read') post.readAt = now;
   else if (action === 'next') {
-    if (library.posts.every(item => item.readAt || item.id === id || item.id === selection[slots.find(key => key !== slot)])) return false;
+    const excluded = new Set([...Object.values(selection), ...reserved]);
+    if (library.posts.every(item => item.readAt || excluded.has(item.id))) return false;
     post.skippedAt = now;
   } else return false;
   delete selection[slot];

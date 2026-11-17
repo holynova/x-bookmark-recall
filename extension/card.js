@@ -79,20 +79,7 @@ const RecallCard = (() => {
     link.rel = 'noopener noreferrer';
     link.append(icon('open'), document.createTextNode('原帖'));
     if (post.text) {
-      const text = element('div', 'xbr-text', post.text);
-      content.append(text);
-      if (Array.from(post.text).length > 115 || post.text.split('\n').length > 3) {
-        text.classList.add('xbr-clamp');
-        const expand = element('button', 'xbr-action xbr-secondary', '展开');
-        expand.type = 'button';
-        expand.setAttribute('aria-expanded', 'false');
-        expand.addEventListener('click', () => {
-          const collapsed = text.classList.toggle('xbr-clamp');
-          expand.textContent = collapsed ? '展开' : '收起';
-          expand.setAttribute('aria-expanded', String(!collapsed));
-        });
-        buttons.append(expand);
-      }
+      content.append(element('div', 'xbr-text', post.text));
     } else {
       content.append(element('div', 'xbr-meta xbr-media-label', post.hasMedia ? '查看原帖中的媒体内容' : '在 X 上查看这条书签'));
     }
@@ -114,15 +101,15 @@ const RecallCard = (() => {
     return article;
   }
 
-  function toast(text, onUndo) {
+  function toast(text, action, actionLabel = '撤销') {
     const container = element('div', 'xbr-toast');
     container.setAttribute('role', 'status');
     container.append(element('span', '', text));
-    if (onUndo) {
-      const button = element('button', '', '撤销');
+    if (action) {
+      const button = element('button', '', actionLabel);
       button.type = 'button';
-      button.dataset.action = 'undo';
-      button.addEventListener('click', onUndo);
+      if (actionLabel === '撤销') button.dataset.action = 'undo';
+      button.addEventListener('click', action);
       container.append(button);
     }
     return container;

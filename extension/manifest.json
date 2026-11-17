@@ -2,9 +2,9 @@
   "manifest_version": 3,
   "name": "X 书签回看",
   "description": "从 X 书签页导入旧收藏，在推荐时间线中重新读到它们。",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "minimum_chrome_version": "114",
-  "permissions": ["storage"],
+  "permissions": ["storage", "unlimitedStorage"],
   "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
   "action": {
     "default_title": "X 书签回看",
@@ -14,7 +14,7 @@
   "background": { "service_worker": "worker.js", "type": "module" },
   "content_scripts": [{
     "matches": ["https://x.com/*"],
-    "js": ["x-page.js", "card.js", "content.js"],
+    "js": ["x-page.js", "card.js", "auto-import.js", "scroll-recall.js", "content.js"],
     "css": ["card.css"],
     "run_at": "document_idle"
   }]

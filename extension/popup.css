@@ -39,7 +39,7 @@ main { padding: 0 15px 14px; }
 h2 { font-size: 12px; font-weight: 700; }
 .import-box { border: 1px solid var(--line); padding: 11px; border-radius: 10px; margin-bottom: 13px; }
 .import-box p { color: var(--secondary); font-size: 11px; margin: 4px 0 8px; }
-button, select { font: inherit; }
+button, select, input { font: inherit; }
 button { cursor: pointer; }
 button:disabled { opacity: .62; cursor: wait; }
 .import-box button {
@@ -60,6 +60,19 @@ button:disabled { opacity: .62; cursor: wait; }
   font-weight: 650;
 }
 .import-box #feedback[data-error="true"], .import-box .collection[data-error="true"] { color: var(--error); }
+.limits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 7px; }
+.limits label { font-size: 11px; color: var(--secondary); }
+.limits input {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin-top: 3px;
+  padding: 4px 6px;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
 .positions h2 { margin-bottom: 3px; }
 .positions label {
   min-height: 36px;

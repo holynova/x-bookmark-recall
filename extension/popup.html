@@ -9,7 +9,7 @@
 <body>
 <header class="heading">
   <img src="icons/48.png" width="34" height="34" alt="">
-  <div><h1>X 书签回看</h1><p>在推荐时间线重看旧书签</p></div>
+  <div><h1>X 书签回看</h1><p>在时间线重看旧书签</p></div>
 </header>
 <main>
   <label id="tab-choice" class="tab-choice" hidden>使用 X 标签页<select id="x-tab"></select></label>
@@ -17,6 +17,14 @@
   <section class="import-box" aria-labelledby="import-title">
     <h2 id="import-title">从 X 书签导入</h2>
     <p id="import-info">打开 X 书签页后，可以导入页面已加载的帖子。</p>
+    <form id="auto-form" hidden>
+      <div class="limits">
+        <label>最多导入（条）<input id="auto-limit" type="number" min="1" max="9007199254740991" step="1" placeholder="不限"></label>
+        <label>发帖时间（近几年）<input id="auto-years" type="number" min="1" max="100" step="1" placeholder="不限"></label>
+      </div>
+      <button type="submit" id="auto-start">自动滚动导入</button>
+      <p id="auto-status" class="collection" role="status" hidden></p>
+    </form>
     <button type="button" id="import">打开 X 书签页</button>
     <button type="button" id="collect" class="secondary" hidden>滚动时继续收集</button>
     <p id="collection" class="collection" hidden></p>
@@ -24,6 +32,11 @@
   </section>
   <section class="positions" aria-labelledby="placement-title">
     <h2 id="placement-title">展示位置</h2>
+    <label>展示频道<select id="channel">
+      <option value="both">两个频道</option>
+      <option value="recommended">仅为你推荐</option>
+      <option value="following">仅正在关注</option>
+    </select></label>
     <label>首页顶部<input type="checkbox" id="top" class="switch" role="switch"></label>
     <label>时间线中<input type="checkbox" id="inline" class="switch" role="switch"></label>
     <label>插入到<select id="interval">

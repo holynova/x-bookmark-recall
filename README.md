@@ -1,31 +1,28 @@
-# X 书签回看 / X Bookmark Recall
+<p align="right">简体中文 · <a href="./README.en.md">English</a></p>
+<p align="center"><img src="./assets/readme/hero-zh.svg" width="100%" alt="X 书签回看，在时间线里重读旧收藏"></p>
 
-从 X 书签页导入收藏，在「为你推荐」顶部和时间线内回看。可换一条、标为已读并撤销。导入只读取页面已加载的帖子，书签按账号保存在本机，已读状态只影响扩展内的回看。
+**X 书签回看**是一款 Chrome 扩展。它把收藏过的帖子放回你正在刷的时间线，正文直接显示。可以换一条、打开原帖，或标为已读。
 
-A Chrome extension that resurfaces your X bookmarks in the For You feed. Import the posts loaded on your Bookmarks page, then revisit them at the top of the feed and between regular posts. Bookmark data and read status stay in your browser.
+[在线体验](https://xiaosang.cc/x-bookmark-recall/) · [下载 v0.3.0](https://github.com/holynova/x-bookmark-recall/releases/tag/v0.3.0)
 
-![顶部与时间线插卡及扩展弹窗的演示](./assets/screenshot.png)
+![演示时间线中的旧收藏卡与频道设置](./assets/readme/feed-zh.webp)
 
-## 在线体验 / Live Demo
+## 三步开始
 
-- [Cloudflare Demo](https://xiaosang.cc/x-bookmark-recall/)
-- [GitHub Repo](https://github.com/holynova/x-bookmark-recall)
+1. 下载并解压扩展。打开 `chrome://extensions/`，开启开发者模式，点击「加载已解压的扩展程序」，选择含 `manifest.json` 的文件夹。已安装的用户可以替换原目录里的文件，再点击「重新加载」。
+2. 登录 X，刷新页面。从扩展弹窗打开书签页，点击「自动滚动导入」。条数和发帖年限均可留空，重复书签计入条数上限。
+3. 回到首页。默认在「为你推荐」和「正在关注」都展示。顶部和时间线内的卡片可以独立开关。
 
-在线演示使用模拟数据。安装扩展后才会在真实 X 页面显示你的书签。
+![自动滚动导入面板，可设置最多条数和发帖年限](./assets/readme/import-zh.webp)
 
-<img src="./assets/qr.png" width="160" alt="扫码打开在线演示">
+## 继续往下刷
 
-## 安装与使用 / Install and use
+第一张时间线卡片默认插在第 3 条帖子后。下一张随机间隔 9–15 条普通帖子，同时至少刷过约 3 屏。按剩余候选，每趟最多再出现 3 张，两频道共享额度。优先抽较早发布的未读帖，近期展示或跳过的书签暂缓出现。滚回同一个插入点会保留原卡。
 
-1. 在 Chrome 或 Chromium 打开 `chrome://extensions/`，开启「开发者模式」。点「加载未打包的扩展程序」，选择本仓库的 `extension/` 目录，刷新 X。
-2. 从扩展弹窗打开 X 的书签页，点「导入已加载书签」。也可开启「滚动时继续收集」后向下滚动。离开或刷新书签页会结束连续导入。
-3. 回到「为你推荐」。弹窗可独立开关顶部与时间线卡片，并调整插入位置。视频和完整引用可打开原帖查看。
+书签和阅读状态保存在本机。已读可撤销。若 X 只在书签页显示摘要，可打开原帖阅读完整内容。截图与在线体验均使用演示数据。
 
-Load the `extension/` directory as an unpacked extension. In the popup, open X Bookmarks and import the loaded posts. Switch to For You to see the cards. The popup controls both placement options.
-
-## 本地预览 / Local preview
-
-扩展目录无需构建。开发环境命令 / Development commands:
+<details>
+<summary>本地开发与部署</summary>
 
 ```sh
 npm ci
@@ -34,10 +31,9 @@ npm run dev
 npm run deploy:check
 ```
 
-## 发布 / Deploy
+扩展目录 `extension/` 可直接加载。演示由作品集 Worker 提供。把 `main` 已提交的 `site/` 同步到作品集 `master` 的 `x-bookmark-recall/`，按作品集配置手动部署。
 
-演示由作品集的 `xiaosang-portfolio` Worker 提供。将本仓库 `main` 已提交的 `site/` 静态文件同步到作品集 `master` 的 `x-bookmark-recall/` 后，从同一作品集提交手动部署：
+[GitHub Repo](https://github.com/holynova/x-bookmark-recall)
 
-```sh
-npx --yes wrangler@4.128.0 deploy --config wrangler.jsonc
-```
+<img src="./assets/qr.png" width="120" alt="扫码打开在线演示">
+</details>

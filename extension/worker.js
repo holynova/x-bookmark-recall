@@ -1,10 +1,12 @@
-import { changeCard, emptyLibrary, mergePosts, selectCards, settingsFrom, summarize, username } from './model.js';
+import { changeCard, emptyLibrary, mergePosts, selectCards, settingsFrom, showsInChannel, summarize, username } from './model.js';
+import { followupsFor, updateFollowups } from './followups.js';
 
 let pending = Promise.resolve();
 const local = chrome.storage.local;
 const session = chrome.storage.session;
 const extensionOrigin = chrome.runtime.getURL('');
 const popupTypes = new Set(['settings', 'summary']);
+const followupTypes = new Set(['followup-pick', 'followup-seen', 'followup-next', 'followup-read', 'followup-undo']);
 
 chrome.runtime.onMessage.addListener((message, sender, reply) => {
   if (message?.target !== 'recall-worker') return;
@@ -55,18 +57,30 @@ async function handleMessage(message, sender) {
     if (visit?.owner === owner) await session.remove(visitKey);
     return {};
   }
-  if (!['cards', 'next', 'read', 'undo'].includes(message.type)) return { error: '未知操作。' };
+  const isFollowup = followupTypes.has(message.type);
+  if (!isFollowup && !['cards', 'next', 'read', 'undo'].includes(message.type)) return { error: '未知操作。' };
+  if (!showsInChannel(settings, message.channel)) return { cards: {}, settings, action: false };
 
-  const selection = visit?.owner === owner ? visit.selection : {};
-  const before = JSON.stringify(selection);
+  const state = visit?.owner === owner ? visit : { owner, selection: {} };
+  const before = JSON.stringify(state);
+  const selection = state.selection;
+  state.followups ??= { entries: [] };
   const now = Date.now();
-  const action = message.type === 'cards' ? false
-    : changeCard(library, selection, message.slot, message.type, message.id, now, message.undoAt);
+  const reserved = () => state.followups.entries.map(entry => entry.postId);
+  const result = isFollowup
+    ? (settings.inline ? updateFollowups(library, state, message, now) : { action: false })
+    : { action: message.type !== 'cards' &&
+      changeCard(library, selection, message.slot, message.type, message.id, now, message.undoAt, reserved()) };
   const { cards, changed } = selectCards(library, selection, settings, now, Math.random,
-    action && message.type === 'next' ? message.id : null);
-  if (changed || action) await local.set({ [libraryKey]: library });
-  if (before !== JSON.stringify(selection)) await session.set({ [visitKey]: { owner, selection } });
-  return { cards, settings, action, undoAt: action && message.type === 'read' ? now : null };
+    result.action && message.type === 'next' ? message.id : null, reserved());
+  if (changed || result.changed || (!isFollowup && result.action)) await local.set({ [libraryKey]: library });
+  if (before !== JSON.stringify(state)) await session.set({ [visitKey]: state });
+  return {
+    cards, settings,
+    followups: settings.inline ? followupsFor(library, state, message.channel, now) : null,
+    action: result.action,
+    undoAt: result.undoAt ?? (result.action && message.type === 'read' ? now : null)
+  };
 }
 
 chrome.tabs.onRemoved.addListener(tabId => {
